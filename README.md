@@ -28,7 +28,7 @@ The final result brings all the imported content pages to be shown inside orbita
 
 ## 4. giving it a try
 
-To get started with site creation using FlakeUI, please refer to the [example site](https://tearflake.github.io/flakeUI/) containing use instructions.
+To get started with site creation using FlakeUI, please refer to the [example site](https://tearflake.github.io/flake-ui/) containing use instructions.
 
 ## 5. licensing
 
