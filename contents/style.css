@@ -1,0 +1,131 @@
+@media (max-device-width: 1919px) {
+    body {
+        width: 512px;
+        font-size: 1em;
+    }
+
+    h1 {
+        font-size: 3.2em;
+    }
+}    
+
+@media (min-device-width: 1920px) {
+    @media (max-device-width: 2879px) {
+        body {
+            width: 640px;
+            font-size: 1.2em;
+        }
+
+        h1 {
+            font-size: 3.2em;
+        }
+    }    
+}
+
+@media (min-device-width: 2880px) {
+    @media (max-device-width: 3839px) {
+        body {
+            width: 960px;
+            font-size: 1.8em;
+        }
+
+        h1 {
+            font-size: 3.2em;
+        }
+    }    
+}
+
+@media (min-device-width: 3840px) {
+    body {
+        width: 1280px;
+        font-size: 2.4em;
+    }
+
+    h1 {
+        font-size: 3.2em;
+    }
+}
+
+@media (min-resolution: 2dppx) {
+    body {
+        width: 50%;
+        font-size: 0.8em;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    @media (min-device-width: 800px) and (min-device-height: 600px) {
+        body {
+            width: 50%;
+            font-size: 1.2em;
+        }
+
+        h1 {
+            font-size: 2em;
+        }
+    }
+
+    @media (min-device-width: 600px) and (min-device-height: 800px) {
+        body {
+            width: 50%;
+            font-size: 1.2em;
+        }
+
+        h1 {
+            font-size: 2em;
+        }
+    }
+}
+
+body {
+    color: rgb(48,48,48);
+    font-family: Times New Roman, Georgia, Garamond;
+    margin: 0 auto;
+    padding: 0;
+}
+
+h1 {
+    padding: 0.1em;
+    border-bottom: 1px solid rgb(48,48,48);
+    margin-top: 0em;
+    font-weight: bold;
+}
+
+body {
+    animation: fadein 0.5s;
+}
+
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.float-left {
+    float:left;
+    font-size: 4.15em;
+    margin-top: -0.165em;
+    margin-bottom: -0.3em;
+    margin-right: 0.1em;
+    font-weight: normal;
+}
+
+code, pre {
+    color: white;
+    background-color: rgb(48,48,48);
+    border-radius: 0.25em;
+    padding: 0.1em;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+}
+
+a {
+    color: rgb(48,48,48);
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+img {
+    border-radius: 0.25em;
+}

@@ -1,0 +1,70 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <meta name="robots" content="noindex"/>
+    <head>
+        <link rel="stylesheet" href="style.css"/>
+        <style>
+            li {
+                margin-bottom: 1em;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>
+            3.2. customizing our contents
+        </h1>
+        <div class="float-left">N</div>
+        <p>
+            ext, we have to modify the example content to adjust it to our own requirements and introduce
+            our own contents instead of the existing one. Freshly unpacked files represent an example content
+            containing these instructions we are currently reading. There are several files and folders
+            of our interest:
+        </p>
+        <p>
+            <ul>
+                <li>
+                    <code>index.html</code> - this is the main file containing visible page
+                    title, social media promotional informations, and meaningful
+                    <a href="https://en.wikipedia.org/wiki/Search_engine_optimization" target="_new">SEO</a>
+                    texts enclosed within <code>noscript</code> tags.
+                    
+                </li>
+                <li>
+                    <code>init.json</code> - in this file we can setup various FlakeUI rendering
+                    parameters. The most important parts in this file is <code>home</code> property
+                    that points to the top XML file.
+                </li>
+                <li>
+                    <code>contents/</code> - this is a folder where we keep our site content files
+                    (HTML, CSS, images, ...). Nevertheles, the content files may reside in any
+                    folder, but it is recommended to place the entire structure under the
+                    <code>contents/</code> folder to keep our site clean and tidy.<br/>
+                    <br/>
+                    A site structure is spanned over multiple cascading XML files, each representing an oval, pointing
+                    to its content and a number of children XML structure files, recursively. The structure resembles a
+                    graph ramification of contents from the home node downwards.<br/>
+                    <br/>
+                    It may be wise to exclude HTML pages in this folder from search engine indexing by setting
+                    <code>meta</code> tag with <code>name="robots"</code> and
+                    <code>content="noindex"</code> attributes. All the search engine information
+                    can be then extracted from <code>noscript</code> tag in the
+                    <code>index.html</code> placed in the FlakeUI interface home folder.
+                </li>
+            </ul>
+        </p>
+        <p>
+            Hopefully, examining the default content example (that is, files containing these instructions) should
+            be descriptive enough to compose our own contents. This is the steep part where we will be using
+            <a href="https://en.wikipedia.org/wiki/File_manager" target="_new">file manager</a>
+            and
+            <a href="https://en.wikipedia.org/wiki/Text_editor" target="_new">text editor</a>
+            to arrange and edit files of our interest. Please refer to provided links if you need to get more
+            familiar with mentioned notions. This procedure is what makes FlakeUI content creating experience
+            "slack", and requires a bit more advanced knowledge from the content creators, especially considering
+            possible use of server side scripting or other technologies.
+        </p>
+        <p>
+            Upon each edit, we would want to test if changes we made reflect what we want them to be. Again, we
+            can test them by entering the local HTTP server address into a web browser.<br/>
+        </p>
+    </body>
+</html>

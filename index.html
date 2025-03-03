@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<!--?xml version="1.0"?-->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    
+    <title>FractaGUI</title>
+    <link rel="icon" type="image/png" href="./media/icon-192.png"/>
+
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="FractaGUI"/>
+    <meta name="description" content="deviant fractal-structure inspired, parent-child orbiting, zooming-elements based graph visualization user interface"/>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://fractarchy.github.io/fractagui/"/>
+    <meta property="og:title" content="FractaGUI"/>
+    <meta property="og:description" content="deviant fractal-structure inspired, parent-child orbiting, zooming-elements based graph visualization user interface"/>
+    <meta property="og:image" content="https://fractarchy.github.io/fractagui/media/socmedia.png"/>
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image"/>
+    <meta property="twitter:url" content="https://fractarchy.github.io/fractagui/"/>
+    <meta property="twitter:title" content="FractaGUI"/>
+    <meta property="twitter:description" content="deviant fractal-structure inspired, parent-child orbiting, zooming-elements based graph visualization user interface"/>
+    <meta property="twitter:image" content="https://fractarchy.github.io/fractagui/media/socmedia.png"/>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    
+    <head>
+        <style media="screen">
+            html, body
+            {
+                overflow: hidden;
+                height: 100%;
+                width: 100%;
+                margin-top: 0px;
+                margin-left: 0px;
+                pointer-events: auto;
+                /*background-color: gray;*/
+                /*touch-action: pinch-zoom;*/
+                touch-action: none;
+                user-select: none;
+            }
+
+            .center {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              flex-direction: column;
+            }
+            
+            a, a.btn:visited, a.btn:link {cursor: pointer; color: rgb(226, 226, 226); text-decoration:underline;}
+            a.btn:hover, a.btn:active {cursor: pointer; color:white; text-decoration:underline;}
+            
+            .hvr1 {cursor: default; /*border: 1px dashed rgb(48,48,48)*/}
+            .hvr {cursor: default;  /*border: 1px dashed rgb(48,48,48)*/}
+            .hvr:hover {cursor: default; /*border: 1px dashed rgb(208,208,208)*/}
+            
+        </style>
+    </head>
+    <body>
+        <noscript>
+            title: FractaGUI
+            tags: user-interface graph-visualization fractal-structure-inspired zooming-elements-based parent-children-orbiting
+            Powered with ❤ by FractaGUI
+        </noscript>
+
+        <div id="tabbar" style="justify-content: center; position: absolute; visibility: hidden; display: flex;  flex-direction: row;  flex-wrap: wrap; font-family: Lucida Console, Courier New, monospace; font-size: 2.5em; padding-top: 4px; width: 100%; height: 48px; color: rgb(208,208,208); background-color: rgb(48,48,48);">
+            &nbsp;
+            <!--div class="hvr" id="selected-tab" style="display: flex;  flex-direction: row;  flex-wrap: wrap;">
+                (
+                <div style="display: block;">
+                    1
+                </div>
+                &nbsp;
+                <div class="hvr">
+                    ×
+                </div>
+                )
+            </div>
+            &nbsp;
+            <div class="hvr" style="display: flex;  flex-direction: row;  flex-wrap: wrap;">
+                (
+                <div style="display: block;">
+                    2
+                </div>
+                &nbsp;
+                <div class="hvr">
+                    ×
+                </div>
+                )
+            </div>
+            &nbsp;
+            <div class="hvr">
+                +
+            </div-->
+        </div>
+        
+        <script>
+            document.addEventListener('contextmenu', function (event) {
+                event.preventDefault();
+            });
+            //if (window.matchMedia('(display-mode: standalone)').matches)
+            
+            var msgHvr = (event) => {
+                if (event.data.msg === "windowMousedown") {
+                    unhvr ();
+
+                } else if (event.data.msg === "windowMouseup") {
+                    hvr ();
+                }
+            };
+            
+            window.addEventListener("message", msgHvr, false);
+
+            window.addEventListener('mousedown', function () {unhvr ()});
+            window.addEventListener('mouseup', function () {hvr()});
+
+            function unhvr () {
+                var el = document.getElementsByClassName ("hvr");
+                for (i = 0; i < el.length; i++) {
+                    el[i].classList.add ("hvr1");
+                }
+                var el = document.getElementsByClassName ("hvr1");
+                for (i = 0; i < el.length; i++) {
+                    el[i].classList.remove ("hvr");
+                }
+            }
+            
+            function hvr () {
+                var el = document.getElementsByClassName ("hvr1");
+                for (i = 0; i < el.length; i++) {
+                    el[i].classList.add ("hvr");
+                }
+                var el = document.getElementsByClassName ("hvr");
+                for (i = 0; i < el.length; i++) {
+                    el[i].classList.remove ("hvr1");
+                }
+            }
+            
+            function initTabs(env) {
+                var tb = document.getElementById("tabbar");
+                if (env.tabVisibility === "false") {
+                    tb.style.visibility = "hidden";
+                
+                } else {
+                    tb.style.visibility = "visible";
+                    tb.style.color = env.tabsColor;
+                    tb.style.backgroundColor = env.tabsBackColor;
+                }
+            }
+        </script>
+        
+        <iframe id="body" src="src/orbital.html" style="border-style:none; position:fixed;/* top:0; left:0; bottom:0; right:0; width:100%; height:100%;*/ border:none; background-color: rgba(0,0,0,0);"></iframe>
+        
+        <script>
+            var setSize = function (orientation) {
+                var tb = document.getElementById("tabbar");
+                tb.innerHTML = document.title;
+
+                var tbheight = Math.floor (48 * magnFactorBut);
+                //tbheight = tbheight - (tbheight % Math.round (envButtons["quant"] / 100 * 4 * Math.max (screen.width, 1920) / 1920));
+                /*
+                if (envButtons["orientation"] === "south") {
+                    document.body.style.backgroundPositionY = tbheight + "px";
+                
+                } else {
+                    document.body.style.backgroundPositionY = window.document.body.clientHeight - tbheight + "px";
+                }
+                */
+                
+                if (document.getElementById("tabbar").style.visibility === "visible") {
+                    if (envButtons["orientation"] === "south") {
+                        tb.style.top = 0;
+                        
+                    } else {
+                        tb.style.bottom = 0;
+                    }
+                    
+                    tb.style.height = Math.ceil (tbheight * 3 / 4) + "px";
+                    tb.style.paddingTop = Math.floor (tbheight / 4) + "px";
+                    tb.style.fontSize = /*Math.floor (*/tbheight * 1 / 2/*)*/ + "px";
+                    //document.getElementById("selected-tab").style.height = Math.ceil (tbheight * 3 / 4) - Math.floor (tbheight * 1 / 8) - Math.ceil (tbheight / 48 - 0.25) + "px";  
+                    //document.getElementById("selected-tab").style.borderBottom = Math.ceil(tbheight / 24 - 0.25) + "px solid";
+                }
+                
+                var bd = document.getElementById("body");                
+                bd.style.left = "0px";
+                bd.style.width = "100%";
+                if (document.getElementById("tabbar").style.visibility === "visible") {
+                    if (envButtons["orientation"] === "south") {
+                        bd.style.top = tbheight + "px";
+                    } else {
+                        bd.style.top = 0;
+                    }
+                    
+                    bd.style.height = document.body.clientHeight - tbheight + "px";
+                } else {
+                    bd.style.top = "0px";
+                    bd.style.height = "100%";
+                }
+                /*
+                var fact = magnFactorBut / 8;
+                var pr = Math.min (window.devicePixelRatio, 2)
+                var ps = Math.round (envButtons.quant / 100 * 4 * Math.max (screen.width, 1920) / 1920);
+                if (ps < pr) ps = pr;
+                if (ps * fact < 1) ps = 1/fact;
+                document.getElementById('lftbuta').style.border = Math.floor(ps*fact) + "px dashed rgb(208,208,208)";
+                document.getElementById("lftbuta").onmouseleave = () => {document.getElementById('lftbuta').style.border = Math.floor(ps*fact) + "px dashed rgb(48,48,48)";};
+                document.getElementById("lftbuta").onmouseenter = () => {document.getElementById('lftbuta').style.border = Math.floor(ps*fact) + "px dashed rgb(208,208,208)";};
+                */
+            };
+
+            window.addEventListener ('resize', function () {
+                setSize ();
+            });
+
+            window.addEventListener ("orientationchange", function () {
+                setSize ();
+            });
+            
+            document.getElementById ("body").addEventListener ("touchstart", function (evt) {
+                evt.preventDefault ();
+            }, false);
+        </script>
+        
+        <div id="lftbut" style="display: block; opacity: 1; visibility: hidden; position: absolute; /*background-color: rgb(48,48,48);*/ left: 0.5em; bottom: 0.5em; width: 144px; height: 144px; border-radius: 72px;">
+            <svg id="lftbutsvg" xmlns="http://www.w3.org/2000/svg" height="144" width="144" style="display: block;"></svg>
+
+            <a class="hvr" id="lftbuta" style="position: absolute; top: 12px; left: 12px;  width: 118px; height: 118px; border-radius: 60px;">
+                <svg id="home" xmlns="http://www.w3.org/2000/svg" height="48" width="48" viewBox="0 120 960 960" style="transform: translate(36px, 32px) scale(2.5);">
+                    <title>home</title>
+                    <path id="lb1" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="M225.385 870.615h155.77v-245h197.69v245h155.77V488.693L480 296.77 225.385 488.564v382.051Zm-45.384 45.384V466.001L480 240.233l299.999 225.768v449.998H533.462v-245H426.538v245H180.001ZM480 583.385Z"/>
+                </svg>
+            </a>
+        </div>
+
+        <div id="rgtbut" style="display: block; opacity: 1; visibility: hidden; position: absolute; /*background-color: rgb(48,48,48);*/ right: 0.5em; bottom: 0.5em; width: 144px; height: 144px; border-radius: 72px;">
+            <svg id="rgtbutsvg" xmlns="http://www.w3.org/2000/svg" height="144" width="144" style="display: block;"></svg>
+            
+            <a class="hvr" id="zoomr" style="position: absolute; border-radius: 24px; top: 48px; left: 48px;">
+                <svg id="zoominr" xmlns="http://www.w3.org/2000/svg" height="48" width="48" style="display: block; transform: scale(0.8);">
+                    <title>zoom in to enter panning mode</title>
+                    <path id="rb1" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="M7.2 43.25 4.75 40.8l7.15-7.15H5.7v-3.4h12.05V42.3h-3.4v-6.2Zm33.6 0-7.15-7.15v6.2h-3.4V30.25H42.3v3.4h-6.2l7.15 7.15ZM5.7 17.75v-3.4h6.2L4.75 7.2 7.2 4.75l7.15 7.15V5.7h3.4v12.05Zm24.55 0V5.7h3.4v6.2l7.2-7.2 2.45 2.45-7.2 7.2h6.2v3.4Z"/>
+                </svg>
+                <svg id="zoomoutr" xmlns="http://www.w3.org/2000/svg" height="48" width="48" style="display: none; transform: scale(0.8);">
+                    <title>zoom out to enter navigating mode</title>
+                    <path id="rb2" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="M5.7 42.3V30.25h3.4v6.2l7.2-7.2 2.45 2.45-7.2 7.2h6.2v3.4Zm24.55 0v-3.4h6.2l-7.15-7.15 2.45-2.45 7.15 7.15v-6.2h3.4V42.3Zm-14-23.6L9.1 11.55v6.2H5.7V5.7h12.05v3.4h-6.2l7.15 7.15Zm15.5 0-2.45-2.45 7.15-7.15h-6.2V5.7H42.3v12.05h-3.4v-6.2Z"/>
+                </svg>
+            </a>
+            <a class="hvr" id="northr" style="position: absolute; border-radius: 24px; top: 0px; left: 48px;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="48" width="48" viewBox="0 96 960 960" style="display: block; transform: scale(0.8);">
+                    <title>go north</title>
+                    <path id="rb3" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="M433 907V425L216 643l-67-67 331-331 331 331-66 67-218-218v482h-94Z"/>
+                </svg>
+            </a>
+            <a class="hvr" id="westr" style="position: absolute; border-radius: 24px; bottom: 48px; left: 0px;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="48" width="48" viewBox="0 96 960 960" style="display: block; transform: scale(0.8);">
+                    <title>go west</title>
+                    <path id="rb4" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="M480 907 149 576l331-331 67 66-217 218h481v94H330l217 217-67 67Z"/>
+                </svg>
+            </a>
+            <a class="hvr" id="eastr" style="position: absolute; border-radius: 24px; top: 48px; right: 0px;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="48" width="48" viewBox="0 96 960 960" style="display: block; transform: scale(0.8);">
+                    <title>go east</title>
+                    <path id="rb5" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="m480 907-67-68 217-216H149v-94h481L413 312l67-67 331 331-331 331Z"/>
+                </svg>
+            </a>
+            <a class="hvr" id="southr" style="position: absolute; border-radius: 24px; bottom: 0px; right: 48px;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="48" width="48" viewBox="0 96 960 960" style="display: block; transform: scale(0.8);">
+                    <title>go south</title>
+                    <path id="rb6" fill="rgb(208,208,208)" stroke="rgb(208,208,208)" stroke-width="0px" d="M480 907 149 576l67-67 217 217V245h94v481l218-217 66 67-331 331Z"/>
+                </svg>
+            </a>
+        </div>
+        
+        <script src="src/buttons.js"></script>
+        
+        
+        <script>
+            var msgOverlay = (event) => {
+                if (event.data.msg === "zoomedInR") {
+                    zoomedInR ();
+
+                } else if (event.data.msg === "zoomedOutR") {
+                    zoomedOutR ();
+
+                } else if (event.data.msg === "resolutionChange") {
+                    setSizeBut ()
+                    //rescaleLftBut ();
+                    //rescaleRgtBut ();
+                    setSize();
+                }
+            };
+            
+            window.addEventListener("message", msgOverlay, false);
+        </script>
+
+        <script src="src/init.js"></script>
+        
+        <script>
+            function initEnv (data) {
+                data["power-consumption-optimisation"] = "75%";
+                //data["ovals-border"] = "false";
+                data["ovals-shadow-radius"] = undefined;
+                data["ovals-shadow-color"] = undefined;
+                data["buttons-shadow-radius"] = undefined;
+                data["buttons-shadow-color"] = undefined;
+                data["orientation"] = "south",
+                data["foreground-color"] = "rgb(48,48,48)";
+                data["background-color"] = "rgb(208,208,208)";
+                
+                data["invert"] =  "false";
+                
+                if (data["invert"] === "true") {
+                    data["orientation"] = "north",
+                    data["foreground-color"] = "rgb(208,208,208)";
+                    data["background-color"] = "rgb(48,48,48)";
+                } else {
+                    data["orientation"] = "south",
+                    data["foreground-color"] = "rgb(40,48,48)";
+                    data["background-color"] = "rgb(208,208,208)";
+                }
+                
+
+                if (data["power-consumption-optimisation"])
+                    try {
+                        if (data["power-consumption-optimisation"].substr(data["power-consumption-optimisation"].length - 1, 1) !== "%")
+                            throw new error ();
+                        
+                        var quant = parseFloat (data["power-consumption-optimisation"].substr(0, data["power-consumption-optimisation"].length - 1));
+                        if (quant <= 0 || quant > 300)
+                            throw new error ();
+                        
+                    } catch (e) {
+                        quant = 75;
+                        console.log ('Error in init.json: "power-consumption-optimisation" has to be a percent greater than "0%" and less than "300%"');
+                    }
+                else
+                    quant = 75;
+
+                if (data["contents-scale"])
+                    try {
+                        if (data["contents-scale"].substr(data["contents-scale"].length - 1, 1) !== "%")
+                            throw new error ();
+                        
+                        var cscale = parseFloat (data["contents-scale"].substr(0, data["contents-scale"].length - 1));
+                        if (cscale <= 0)
+                            throw new error ();
+                        
+                    } catch (e) {
+                        cscale = 100;
+                        console.log ('Error in init.json: "contents-scale" hast to be a percent greater than "0%"');
+                    }
+                else
+                    cscale = 100;
+                
+                if (data["ovals-scale"])
+                    try {
+                        if (data["ovals-scale"].substr(data["ovals-scale"].length - 1, 1) !== "%")
+                            throw new error ();
+                        
+                        var uiscale = parseFloat (data["ovals-scale"].substr(0, data["ovals-scale"].length - 1));
+                        if (uiscale <= 0 || uiscale > 150)
+                            throw new error ();
+                        
+                    } catch (e) {
+                        uiscale = 100;
+                        console.log ('Error in init.json: "ovals-scale" has to be a percent between than "0%" and "150%"');
+                    }
+                else
+                    uiscale = 100;
+
+                if (data["ovals-spacing"])
+                    try {
+                        if (data["ovals-spacing"].substr(data["ovals-spacing"].length - 1, 1) !== "%")
+                            throw new error ();
+                        
+                        var ovalSpacing = parseFloat (data["ovals-spacing"].substr(0, data["ovals-spacing"].length - 1));
+                        if (ovalSpacing < 0 || ovalSpacing >= 100)
+                            throw new error ();
+                        
+                    } catch (e) {
+                        ovalSpacing = 0;
+                        console.log ('Error in init.json: "ovals-spacing" has to be a percent between "0%" and "100%"');
+                    }
+                else
+                    ovalSpacing = 0;
+
+                data["oval-opacity"] = 1;
+                if (!data["background-color"])
+                    data["background-color"] = "rgb(208,208,208)";
+                
+                if (!data["foreground-color"])
+                    data["foreground-color"] = "rgb(48,48,48)";
+                
+
+                if (!data["ovals-border"])
+                    data["ovals-border"] = "false";
+                
+                var osradius
+                if (data["ovals-shadow-radius"]) {
+                    osradius = parseFloat (data["ovals-shadow-radius"]);
+                    
+                } else {
+                    osradius = 0;
+                }
+                
+                var bsradius;
+                if (data["buttons-shadow-radius"]) {
+                    bsradius = parseFloat (data["buttons-shadow-radius"]);
+                    
+                } else {
+                    bsradius = 0;
+                }
+                
+                if (data["buttons-visible"]) {
+                    butVisibility =  data["buttons-visible"];
+                    
+                } else {
+                    butVisibility = "false";
+                }
+                
+                if (data["top-bar-visible"]) {
+                    tabVisibility = data["top-bar-visible"];
+                    
+                } else {
+                    tabVisibility = "false";
+                }
+                
+                return {
+                    topNode: data["home"],
+                    
+                    color1: data["background-color"],
+                    color2: data["foreground-color"],
+
+                    orientation: data["orientation"] === "north" ? "north": "south",
+                    contentScale: cscale,
+                    uiscale: uiscale,
+                    uishift: uiscale <= 100 ? 0 : ((uiscale - 100) / 4 - 0.5),
+                    quant: quant,
+                    ovalSpacing: ovalSpacing,
+                    ovalBackColor: data["background-color"],
+                    ovalBorder: (data["ovals-border"] === "false" ? "false" : data["foreground-color"]),
+                    ovalOpacity: data["oval-opacity"],
+                    ovalShadowRadius: osradius,
+                    ovalShadowColor: data["ovals-shadow-color"],
+                    tabsColor: data["background-color"],
+                    tabsBackColor: data["foreground-color"],
+                    butsColor: data["background-color"],
+                    butsBackColor: data["foreground-color"],
+                    butsBorderColor: (data["ovals-border"] === "false" ? false : data["background-color"]),
+                    butShadowRadius: bsradius,
+                    butShadowColor: data["buttons-shadow-color"],
+                    butVisibility: butVisibility,
+                    tabVisibility: tabVisibility
+                }
+            }
+        </script>
+        
+        <script>
+            document.getElementById ("body").onload = function () {
+                initProps ((fileJSON, home) => {
+                    
+                    var env = initEnv (fileJSON);
+                    document.body.style.backgroundImage = "url('" + getRaster (env.quant, env.color1, env.color2).src + "')";
+                    document.body.style.backgroundRepeat = "repeat";
+                    document.body.style.imageRendering = "pixelated";
+                    initButtons (env);
+                    initTabs (env);
+                    
+                    window.addEventListener('resize', function () {
+                        setSize ();
+                    });
+                    setSize();
+                    
+                    document.getElementById ("body").contentWindow.postMessage({msg: "init", home: home, env: env}, "*");
+                });
+            }
+        </script>
+
+        <script>
+            function getRaster (quant, color1, color2) {
+                var cnv = document.createElement ("canvas");
+                var pr = Math.min (window.devicePixelRatio, 2)
+                var ps = Math.round (quant / 100 * 4 * Math.max (screen.width, 1920) / 1920);
+                
+                if (ps < pr)
+                    ps = pr;
+                    
+                cnv.width = ps * 2;
+                cnv.height = ps * 2;
+                var ctx = cnv.getContext('2d');
+                ctx.fillStyle = "rgb(208,208,208)";
+                ctx.fillStyle = color1;
+                ctx.fillRect (0, 0, ps, ps);
+                ctx.fillRect (ps, ps, ps, ps);
+                ctx.fillStyle = "rgb(48,48,48)";
+                ctx.fillStyle = color2;
+                ctx.fillRect (0, ps, ps, ps);
+                ctx.fillRect (ps, 0, ps, ps);
+                
+                var img = document.createElement ("img");
+                img.src = cnv.toDataURL('image/png');
+                return img;
+            }
+        </script>
+    </body>
+</html>

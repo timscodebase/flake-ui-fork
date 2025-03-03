@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<!--?xml version="1.0"?-->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <head>
+        <style media="screen">
+            section {
+                position: absolute; top:0; bottom:0; left:0; right:0;
+                overflow: hidden;
+            }
+            
+            html, body
+            {
+                overflow: hidden;
+                height: 100%;
+                width: 100%;
+                margin-top: 0px;
+                margin-left: 0px;
+                pointer-events: auto;
+                /*touch-action: pinch-zoom;*/
+                touch-action: none;
+                user-select: none;
+            }
+        </style>
+        <script src="orbital.js"></script>
+        <script src="loader.js"></script>
+    </head>
+    <body>
+      <section id="topsect">
+        <div id="divContainerWrapperAll">
+            <div id="divContainerWrapper">
+                <div id="divContainer" style="position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px;">
+                </div>
+            </div>
+        </div>
+        <div id="divEventOverlay" ondragstart="return false" style="position: absolute; background-color: rgba(255, 0, 0, 0); top: 0px; bottom: 0px; left: 0px; right: 0px; draggable: false;">
+        </div>
+
+        <script>
+            document.addEventListener('contextmenu', function (event) {
+                event.preventDefault();
+            });
+
+            var error;
+            function getDesign() {
+                var design;
+                if (window.matchMedia('only screen and (max-device-width: 360px)').matches) {
+                    design = 'touch';
+                 } else if (window.matchMedia('only screen and (max-device-width: 1024px)').matches) {
+                    design = 'tablet';
+                } else if (window.matchMedia('screen').matches) {
+                    design = 'desktop';
+                } else if (window.matchMedia('handheld').matches) {
+                    design = 'mobile';
+                }
+                return design;
+            }
+
+            function dispatchSize () {
+                divContainer.width = window.innerWidth;
+                divContainer.height = window.innerHeight;
+                
+                divContainer.dispatchEvent(new CustomEvent('resize1', null));
+
+                for (var i = 0; i < loadedOvals.length; i++) {
+                    if (loadedOvals[i] && loadedOvals[i].ifr)
+                        window.postMessage({msg: "resize", index: i, width: loadedOvals[i].ifr.clientWidth, height: loadedOvals[i].ifr.clientHeight}, "*");
+                }
+            }
+
+            function dispatchDraw () {
+                divContainer.dispatchEvent(new CustomEvent('redraw1', null));
+            }
+
+            // fixing chromium tab change bug
+            document.addEventListener("visibilitychange", () => {
+                dispatchDraw ();
+            });
+
+            wonload = function () {
+                dispatchSize ();
+                objOrbit = Orbital (divContainer, nodeTree, env.quant / 100, env.contentScale / 100, env.ovalBackColor, env.ovalBorder, env.backColor, env.ovalShadowRadius, env.ovalShadowRadius? env.ovalShadowColor: null, env.uiscale / 100, onIdle, onBusy, env.ovalSpacing / 100, env.orientation === "north" ? Math.PI: 0, env.uishift / 100, zoomedInR, zoomedOutR, zoomingOutR);
+                
+
+                divContainer.style.visibility = "visible";
+                window.addEventListener("message", msg, false);
+
+                initScreen ();
+
+                var resizeId;
+                window.addEventListener('resize', function () {
+                    document.getElementById("tooltip").style.visibility = "hidden"
+                    divContainer.style.visibility = "hidden";
+
+                    clearTimeout(resizeId);
+                    resizeId = setTimeout(function () {
+                        var p = objOrbit.getCursor ();
+                        while (p.parent) {
+                            p = p.parent
+                            if (p.data && p.data.ifr)
+                                delete p.data.ifr;
+                        }
+                        dispatchSize ();
+                        divContainer.style.visibility = "visible";
+
+                        for (var i = 0; i < loadedOvals.length; i++) {
+                            if (loadedOvals[i] && loadedOvals[i].ifr)
+                                loadedOvals[i].ifr.style.visibility = "hidden";
+                        }
+                        //document.getElementById("div1").style.backdropFilter = "blur(10px)";
+                    }, 150);
+                });
+                
+                window.dispatchEvent(new CustomEvent('resize'));
+            }
+
+            var pauseLoading;
+            var continueLoading;
+            var onIdleRunning;
+            var idleAgain;
+            var interval;
+            
+            function onBusy () {
+                pauseLoading = true;
+                idleAgain = false;
+                continueLoading = false;
+                clearInterval (interval);
+            }
+
+            function onIdle (ovals) {
+                pauseLoading = false;
+                idleAgain = ovals;
+                continueLoading = idleAgain;
+
+                clearInterval (interval);
+                interval = setInterval (async function () {
+                    if (!pauseLoading && !onIdleRunning && idleAgain) {
+                        clearInterval (interval);
+                        refresh (idleAgain);
+                    }
+                }, 125);
+            }
+
+            allOvals = []
+            function hideOvals (data) {
+                for (var i = 0; i < allOvals.length; i++) {
+                    if (allOvals[i].ifr && allOvals[i].ifr.style.visibility !== "hidden") {
+                        allOvals[i].ifr.style.visibility = "hidden";
+                        allOvals[i].ifr.style.pointerEvents = "none"
+                    }
+                }
+            }
+            
+            var oldOvals = [];
+            async function refresh (ovals) {
+                idleAgain = false;
+                onIdleRunning = true;
+                
+                sortedOvals = [...ovals];
+                sortedOvals.sort((a, b) => (a.radius > b.radius) ? -1 : 1)
+                for (i = 0; i < sortedOvals.length && continueLoading === ovals; i++) {
+                    var node = sortedOvals[i].data;
+                    if (!node.ifr) {
+                        try {
+                            await loadOval (node);
+                        } catch (e) {
+                            break;
+                        }
+                    }
+                }
+                
+                // update cache
+                for (var i1 = 0; i1 < oldOvals.length; i1++) {
+                    is = false;
+                    for (var i2 = 0; i2 < ovals.length; i2++) {
+                        if (oldOvals[i1].data === ovals[i2].data) {
+                            is = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!is) {
+                        var p = sortedOvals[0].data;
+                        do {
+                            if (oldOvals[i1].data === p) {
+                                is = true;
+                                break;
+                            }
+                            p = p.parent;
+                        } while (p);
+                        
+                        if (!is) {
+                            if (oldOvals[i1].data.ifr)
+                                divContainer.removeChild (oldOvals[i1].data.ifr);
+                                
+                            oldOvals[i1].data.ifr = null;
+                            oldOvals[i1].data.children = [];
+                        }
+                    }
+                }
+                oldOvals = ovals;
+
+                onIdleRunning = false;
+            }
+            
+            var msg = (event) => {
+                if (event.data.msg === "resize") {
+                    if (loadedOvals[event.data.index].ifr && loadedOvals[event.data.index].wrappedifr.contentWindow.document.body) {
+                        //loadedOvals[event.data.index].wrappedifr.width = loadedOvals[event.data.index].wrappedifr.contentWindow.document.body.scrollWidth;
+                        //loadedOvals[event.data.index].ifr.width = loadedOvals[event.data.index].wrappedifr.contentWindow.document.body.scrollWidth;
+                        loadedOvals[event.data.index].ifr.width = objOrbit.getOvalWidth ();//window.innerWidth;
+                        loadedOvals[event.data.index].wrappedifr.width = objOrbit.getOvalWidth ();//window.innerWidth;
+                        loadedOvals[event.data.index].ifr.height = loadedOvals[event.data.index].wrappedifr.contentWindow.document.body.scrollHeight;//.scrollHeight;//event.data.height;
+                        loadedOvals[event.data.index].wrappedifr.height = loadedOvals[event.data.index].wrappedifr.contentWindow.document.body.scrollHeight;//.scrollHeight;//event.data.height;
+                    }
+
+                    divContainer.dispatchEvent(new CustomEvent('updateOvalAlign', {detail: loadedOvals[event.data.index]}));
+                    divContainer.dispatchEvent(new CustomEvent('redraw', null));
+
+                } else if (event.data.msg === "relink") {
+                    loadedOvals[event.data.index].hyperlinks = event.data.hyperlinks;
+
+                } else if (event.data.msg === "unload") {
+                    delete loadedOvals[event.data.index];
+                }
+            }
+
+            
+            var nodeTree, objOrbit;
+            
+            var divContainer = document.getElementById ("divContainer")
+            var divContainerWrapper = document.getElementById ("divContainerWrapper")
+            
+            window.addEventListener('mousedown', function () {
+                window.parent.postMessage({msg: "windowMousedown"}, "*");
+            });
+            
+            window.addEventListener('mouseup', function () {
+                window.parent.postMessage({msg: "windowMouseup"}, "*");
+            });
+            
+            var mqString = `(device-width: ${window.screen.width}px)`;
+            
+            matchMedia(mqString).addListener(() => {
+                /*
+                for (var i = 0; i < allOvals.length; i++) {
+                    if (allOvals[i].ifr) {
+                        divContainer.removeChild (allOvals[i].ifr);
+                        delete (allOvals[i].ifr);
+                    }
+                }
+
+                dispatchDraw ();
+                */
+                initScreen ();
+                window.parent.postMessage({msg: "resolutionChange"}, "*");
+
+                return;
+            });
+            
+        </script>
+
+        <script>
+            function fadein (obj) {
+                var steps = 1;
+                var fade = 0;
+                var fadein1 = function () {
+                    if (fade < 1) {
+                        obj.style.opacity = `${fade}`;
+                        setTimeout (fadein1, 200 / steps);
+                    } else {
+                        obj.style.opacity = `1`;
+                    }
+                    fade += 1 / steps;
+                }
+                fadein1 ();
+            }
+            
+            function reload (topNode) {
+                if (topNode.substr(0, "javascript:".length) !== "javascript:") {
+                    nodeTree = {xml: home, parent: {index: 0}};
+                    nodeTree.parent.children = [nodeTree];
+                    objOrbit.setMagn (1);
+                    zoomedOutR ();
+                    divContainer.dispatchEvent(new CustomEvent('redefineData', {detail: nodeTree}));
+                    fadein (divContainer);
+                } else {
+                    eval (topNode);
+                }
+            }
+        </script>
+        
+        <script>
+            function initScreen () {
+                if (env.ovalShadowRadius === 0) {
+                    divContainerWrapper.style.filter = "";
+                } else {
+                    divContainerWrapper.style.filter = " drop-shadow(0px 0px " + objOrbit.getRadius () * env.ovalShadowRadius / 100 + "px " + env.ovalShadowColor + ") ";
+                }
+                
+                if (env.ovalOpacity)
+                    objOrbit.getCnv().style.filter = "opacity(" + env.ovalOpacity + ")";
+
+                /*
+                if (env.backImage) {
+                    //document.body.style.backgroundImage = "url('../" + env.backImage + "')";
+                    //document.body.style.backgroundSize = "cover";
+                    //document.body.style.backgroundPosition = "center";
+                }
+                */
+            }
+        </script>
+        
+        <script>
+            var msgOverlay = (event) => {
+                if (event.data.msg === "lftbutaClick") {
+                    reload (env["topNode"]);
+
+                } else if (event.data.msg === "lftbutaMouseDown") {
+                    objOrbit.setMouseOff ();
+
+                } else if (event.data.msg === "lftbutaTouchstart") {
+                    objOrbit.setMouseOff ();
+
+                } else if (event.data.msg === "lftbutaDragstart") {
+
+                }
+                
+                if (event.data.msg === "zoominrClick") {
+                    objOrbit.zoomIn ();
+
+                } else if (event.data.msg === "zoomoutrClick") {
+                    objOrbit.zoomOut ();
+                }
+                
+                if (event.data.msg === "northrClick") {
+                    if (objOrbit.getMagn() === 1)
+                        objOrbit.levelUp ();
+                    else
+                        objOrbit.slideUp ();
+                
+                } else if (event.data.msg === "southrClick") {
+                    if (objOrbit.getMagn() === 1)
+                        objOrbit.levelDown ();
+                    else
+                        objOrbit.slideDown ()
+
+                } else if (event.data.msg === "eastrClick") {
+                    if (objOrbit.getMagn() === 1)
+                        objOrbit.rotCounterClockwise ();
+                    else
+                        objOrbit.slideRight ();
+                
+                } else if (event.data.msg === "westrClick") {
+                    if (objOrbit.getMagn() === 1)
+                        objOrbit.rotClockwise ();
+                    else
+                        objOrbit.slideLeft ();
+                }
+
+                if (event.data.msg === "rgtbutMouseDown") {
+                    objOrbit.setMouseOff ();
+
+                } else if (event.data.msg === "rgtbutTouchstart") {
+                    objOrbit.setMouseOff ();
+
+                }
+
+                if (event.data.msg === "windowTouchend") {
+                    objOrbit.setMouseOn ();
+                    divContainer.dispatchEvent(new CustomEvent('mouseup', null));
+                
+                } else if (event.data.msg === "windowMouseup") {
+                    objOrbit.setMouseOn ();
+                    divContainer.dispatchEvent(new CustomEvent('mouseup', null));
+                }
+            }
+
+            function zoomedInR () {
+                window.parent.postMessage({msg: "zoomedInR"}, "*");
+            }
+            
+            function zoomedOutR () {
+                window.parent.postMessage({msg: "zoomedOutR"}, "*");
+            }
+            
+            function zoomingOutR () {
+            }
+            
+            function zoomingInR () {
+            }
+
+            window.addEventListener("message", msgOverlay, false);
+        </script>
+        
+        <script>
+            var env, home;
+            function init(processedHome, processedEnv) {
+                home = processedHome;
+                env = processedEnv;
+                
+                nodeTree = {xml: home, parent: {index: 0}};
+                nodeTree.parent.children = [nodeTree];
+                
+                document.body.style.backgroundColor = env.backColor;
+                window.addEventListener("load", wonload ());
+            }
+            
+            var msgInit = (event) => {
+                if (event.data.msg === "init") {
+                    init (event.data.home, event.data.env);
+                }
+            }
+            
+            window.addEventListener("message", msgInit, false);
+        </script>
+      </section>
+    </body>
+</html>
