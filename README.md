@@ -8,7 +8,7 @@ tags: user-interface, graph-visualization, zooming-elements-based, parent-childr
 > 
 > Would you like to bring a touch of adventurous spirit to your contents? Presenting your contents, FlakeUI does things a bit differently. As an original graph content navigating environment, it provides unusual experience in discovering information among your content selection. Possible applications are surely endless, and they are waiting to be discovered by that awesome child of creativity in you.
 
-## 1. about flakeUI
+## 1. about flake-ui
 
 FlakeUI is a fractal-structure inspired, parent-child orbiting, and zooming-elements based graph user interface. Javascript based FlakeUI is best used in HTML pages where visitors often return, like in a curated selection of web links, searchable hierarchical catalog of arbitrary items, or maybe even some cool mobile content start pages if someone decides to go in PWA (progressive web application) direction.
 
